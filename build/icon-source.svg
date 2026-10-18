@@ -1,0 +1,32 @@
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <clipPath id="squircle">
+      <rect x="0" y="0" width="1024" height="1024" rx="224"/>
+    </clipPath>
+    <radialGradient id="glow" cx="50%" cy="30%" r="65%">
+      <stop offset="0%" stop-color="#ff9d2e" stop-opacity="0.22"/>
+      <stop offset="100%" stop-color="#ff9d2e" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="bg" x1="10%" y1="0%" x2="90%" y2="100%">
+      <stop offset="0%" stop-color="#3a2f37"/>
+      <stop offset="55%" stop-color="#2b232b"/>
+      <stop offset="100%" stop-color="#1f191f"/>
+    </linearGradient>
+    <pattern id="grid" width="64" height="64" patternUnits="userSpaceOnUse">
+      <path d="M 64 0 L 0 0 0 64" fill="none" stroke="#ffffff" stroke-opacity="0.03" stroke-width="1"/>
+    </pattern>
+  </defs>
+
+  <g clip-path="url(#squircle)">
+    <rect x="0" y="0" width="1024" height="1024" fill="url(#bg)"/>
+    <rect x="0" y="0" width="1024" height="1024" fill="url(#grid)"/>
+    <rect x="0" y="0" width="1024" height="1024" fill="url(#glow)"/>
+    <rect x="0" y="0" width="1024" height="1024" fill="none" stroke="#ff9d2e" stroke-opacity="0.18" stroke-width="4"/>
+  </g>
+
+  <!-- 4-bar waveform glyph, centered -->
+  <rect x="344" y="464" width="48" height="96"  rx="24" fill="#ff9d2e"/>
+  <rect x="440" y="392" width="48" height="240" rx="24" fill="#ff9d2e"/>
+  <rect x="536" y="344" width="48" height="336" rx="24" fill="#ff9d2e"/>
+  <rect x="632" y="440" width="48" height="144" rx="24" fill="#ff9d2e"/>
+</svg>

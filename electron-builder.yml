@@ -1,0 +1,20 @@
+appId: com.themisterchong.rekordbox-usb-repair
+productName: Rekordbox USB Repair
+directories:
+  buildResources: build
+files:
+  - '!**/.vscode/*'
+  - '!src/*'
+  - '!electron.vite.config.{js,ts,mjs,cjs}'
+  - '!fixtures/**'
+  - '!{.eslintignore,.eslintrc.cjs,.prettierignore,.prettierrc.yaml,dev-app-update.yml,CHANGELOG.md,README.md}'
+  - '!{.env,.env.*,.npmrc,pnpm-lock.yaml}'
+mac:
+  target:
+    - target: dmg
+      arch:
+        - universal
+  category: public.app-category.music
+  hardenedRuntime: true
+  gatekeeperAssess: false
+npmRebuild: true

@@ -1,0 +1,4 @@
+allowBuilds:
+  better-sqlite3-multiple-ciphers: true
+  electron: true
+  esbuild: true
