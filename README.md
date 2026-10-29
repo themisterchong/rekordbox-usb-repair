@@ -76,6 +76,10 @@ macOS only for now: drive detection and the format tools use `diskutil`. The rep
 - [Deep Symmetry / crate-digger](https://github.com/Deep-Symmetry/crate-digger) and the PIONEER.md format docs.
 - [M-Igashi/baken](https://github.com/M-Igashi/baken), [chrisle/rbxport](https://github.com/chrisle/rbxport), [haivala/dj-usb-tkit](https://github.com/haivala/dj-usb-tkit) for publishing their hardware findings.
 
+## Credit
+
+Made by Mr. Chong ([themisterchong](https://github.com/themisterchong)). If this tool or what's in it helped your project, please credit Mr. Chong and link to this repository. Copying the code means keeping the copyright line from the MIT licence.
+
 ## License
 
-MIT
+MIT — Copyright (c) 2026 Mr. Chong (themisterchong). See [LICENSE](LICENSE).
