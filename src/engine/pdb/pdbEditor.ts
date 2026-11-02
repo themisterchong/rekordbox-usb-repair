@@ -192,7 +192,10 @@ export class PdbEditor {
     writeFileSync(path, this.toBytes())
   }
 
-  /** The current state, parsed. Reparsed after each mutation. */
+  /**
+   * The current state, parsed. Rows appended by this editor are added to it
+   * as they are written (see noteAppendedRow); any other mutation reparses.
+   */
   get db(): Database {
     if (this.dbCache === null) {
       this.dbCache = new Database(this.buf)
@@ -455,7 +458,8 @@ export class PdbEditor {
     }
 
     // Row bytes (zero-padded to the allocated size) into the heap.
-    const rowStart = pageOff + PAGE_HEADER_SIZE + used
+    const rowOffset = PAGE_HEADER_SIZE + used
+    const rowStart = pageOff + rowOffset
     row.copy(this.buf, rowStart)
     this.buf.fill(0, rowStart + row.length, rowStart + alloc)
     if (indexShiftAt !== undefined) {
@@ -479,7 +483,49 @@ export class PdbEditor {
     this.buf.writeUInt16LE(this.pageSize - PAGE_HEADER_SIZE - used - PdbEditor.dirBytes(newN), pageOff + 0x1c)
     this.buf.writeUInt16LE(this.appends.get(pageIndex)!, pageOff + 0x20)
     this.buf.writeUInt16LE(this.origSlots.get(pageIndex)!, pageOff + 0x22)
-    this.invalidateDb()
+    this.noteAppendedRow(tableType, entry, pageIndex, rowOffset)
+  }
+
+  /**
+   * Add the row appendRow() just wrote to the parsed state, instead of
+   * reparsing the whole file after every row - that made a rebuild
+   * quadratic in its track count (~20 s for 1293 tracks). The new row sits
+   * in the last slot of the table's last page, which is exactly where a
+   * full reparse would list it, unless that table's chain didn't read
+   * cleanly; then (or if the row itself doesn't parse) reparse after all.
+   */
+  private noteAppendedRow(tableType: number, entry: number, pageIndex: number, rowOffset: number): void {
+    const db = this.dbCache
+    if (db === null) return
+    if (db.tableErrors.has(tableType)) return this.invalidateDb()
+    try {
+      const pageOff = pageIndex * this.pageSize
+      db.appendParsedRow(tableType, this.buf.subarray(pageOff, pageOff + this.pageSize), pageIndex, rowOffset)
+    } catch {
+      return this.invalidateDb()
+    }
+    const table = db.tables.find((t) => t.type === tableType)!
+    table.emptyCandidate = this.buf.readUInt32LE(entry + 4)
+    table.lastPage = this.buf.readUInt32LE(entry + 12)
+  }
+
+  /** Whether `page` is on any table's page chain, as a full reparse walks them. */
+  private pageInAnyChain(page: number): boolean {
+    const numTables = this.buf.readUInt32LE(8)
+    const total = this.totalPages()
+    for (let i = 0; i < numTables; i++) {
+      const off = 0x1c + i * 16
+      const last = this.buf.readUInt32LE(off + 12)
+      const visited = new Set<number>()
+      let p = this.buf.readUInt32LE(off + 8)
+      while (p < total && !visited.has(p)) {
+        if (p === page) return true
+        if (p === last) break
+        visited.add(p)
+        p = this.buf.readUInt32LE(p * this.pageSize + 0x0c)
+      }
+    }
+    return false
   }
 
   private presentCount(pageOff: number, n: number): number {
@@ -503,6 +549,10 @@ export class PdbEditor {
     this.ensureCapacity(needed)
 
     const oldLast = this.buf.readUInt32LE(entry + 12)
+    // The parsed state is only extended row by row (noteAppendedRow) while
+    // the new page is a fresh one that the table's old last page links to;
+    // claiming a page some chain already walks changes what a reparse sees.
+    if (this.dbCache !== null && this.pageInAnyChain(newPage)) this.invalidateDb()
     const pageOff = newPage * this.pageSize
     this.buf.fill(0, pageOff, pageOff + this.pageSize)
     this.buf.writeUInt32LE(newPage, pageOff + 0x04)
@@ -529,6 +579,8 @@ export class PdbEditor {
         this.buf.writeUInt32LE(newPage, heap + 4)
       }
     }
+
+    if (this.buf.readUInt32LE(oldLast * this.pageSize + 0x0c) !== newPage) this.invalidateDb()
 
     this.origSlots.set(newPage, 0)
     this.appends.set(newPage, 0)

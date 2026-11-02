@@ -433,6 +433,23 @@ export class PdbFile {
     return this.locationsByType.get(tableType) ?? []
   }
 
+  /**
+   * Record one row just appended after a table's last parsed row, exactly
+   * as a full reparse would list it - so PdbEditor doesn't have to re-read
+   * the whole file after every append. `page` is the page as it now is (the
+   * editor's buffer may have grown since this file was parsed).
+   */
+  appendParsedRow(tableType: number, page: Buffer, pageIndex: number, rowOffset: number): void {
+    const parser = this.rowParsers[tableType]
+    const parsed = parser ? parser(page, rowOffset) : ({ pageIndex, offset: rowOffset } satisfies UnknownRow)
+    if (!this.rowsByType.has(tableType)) {
+      this.rowsByType.set(tableType, [])
+      this.locationsByType.set(tableType, [])
+    }
+    this.rowsByType.get(tableType)!.push(parsed)
+    this.locationsByType.get(tableType)!.push(pageIndex * this.pageSize + rowOffset)
+  }
+
   private page(index: number): Buffer {
     const start = index * this.pageSize
     return this.data.subarray(start, start + this.pageSize)
